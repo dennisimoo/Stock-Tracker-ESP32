@@ -137,7 +137,6 @@ StockTracker/
 ├── config.h              # Configuration settings (WiFi, stocks, etc.)
 ├── src/
 │   └── main.cpp          # Main application code
-├── images/               # Display photos and screenshots
 │   └── display.jpg       # Image
 ├── platformio.ini        # PlatformIO build configuration
 ├── .gitignore           # Git ignore rules

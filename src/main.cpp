@@ -315,7 +315,7 @@ void update_display() {
       else if (hour12 > 12) hour12 -= 12;
       const char* ampm = (timeinfo.tm_hour >= 12) ? "PM" : "AM";
       
-      tft.printf("Screen updated: %d:%02d %s", 
+      tft.printf("Last updated: %d:%02d %s", 
                  hour12, timeinfo.tm_min, ampm);
     } else {
       tft.printf("Updated (%d stocks)", valid_count);
@@ -379,7 +379,7 @@ void update_single_stock(int stock_index) {
       else if (hour12 > 12) hour12 -= 12;
       const char* ampm = (timeinfo.tm_hour >= 12) ? "PM" : "AM";
       
-      tft.printf("Screen updated: %d:%02d %s", 
+      tft.printf("Last updated: %d:%02d %s", 
                  hour12, timeinfo.tm_min, ampm);
     } else {
       tft.printf("Updated (%d stocks)", valid_count);
