@@ -78,8 +78,8 @@ void setup() {
     tft.fillScreen(TFT_BLACK);
     
     // Configure time
-    configTime(-8 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-    Serial.println("Time configured for PST");
+    configTime(TIMEZONE_OFFSET * 3600, 0, "pool.ntp.org", "time.nist.gov");
+    Serial.printf("Time configured for timezone offset: %d hours\n", TIMEZONE_OFFSET);
   }
   
   // Ready to start
@@ -143,8 +143,10 @@ void fetch_stock_data() {
     
     HTTPClient http;
     http.begin(url);
-    http.setTimeout(10000);
-    http.addHeader("User-Agent", "Mozilla/5.0");
+    http.setTimeout(15000); // Increased timeout to 15 seconds
+    http.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+    http.addHeader("Accept", "application/json");
+    http.addHeader("Connection", "close");
     
     int httpCode = http.GET();
     Serial.printf("HTTP Response Code: %d\n", httpCode);
@@ -236,7 +238,7 @@ void fetch_stock_data() {
   // Only update display if data actually changed
   if (any_changed) {
     Serial.println("Updating display due to data changes");
-    last_update_time = time(nullptr); // Update timestamp when data changes
+    last_update_time = time(nullptr); // Update timestamp only when data changes
     update_display();
     
     // Reset change flags

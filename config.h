@@ -17,7 +17,7 @@ const char* STOCK_NAMES[] = {"Apple", "Google", "NVIDIA", "Tesla", "Meta", "Amaz
 const int NUM_STOCKS = 8;
 
 // API Settings (Yahoo Finance - no API key needed)
-#define UPDATE_INTERVAL_SECONDS 30
+#define UPDATE_INTERVAL_SECONDS 60  // Increased to reduce API rate limiting
 
 // Display Settings
 #define LCD_BRIGHTNESS 255  // 0-255
