@@ -1,9 +1,12 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiManager.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <TFT_eSPI.h>
 #include <time.h>
+#include <nvs_flash.h>
+#include <esp_wifi.h>
 #include "../config.h"
 
 #define LCD_BACKLIGHT_PIN 21
@@ -11,6 +14,7 @@
 #define SCREEN_HEIGHT 320
 
 #define UPDATE_INTERVAL (UPDATE_INTERVAL_SECONDS * 1000UL)
+
 
 // Stock data structure
 struct StockData {
@@ -39,12 +43,16 @@ void setup() {
   Serial.begin(115200);
   delay(100);
   
+  Serial.println("=== STOCK TRACKER WITH WIFIMANAGER v2.0 ===");
+  Serial.println("This version uses WiFiManager for WiFi setup");
+  
   // Initialize display
   tft.init();
   tft.setRotation(0);
   tft.fillScreen(TFT_BLACK);
   pinMode(LCD_BACKLIGHT_PIN, OUTPUT);
   analogWrite(LCD_BACKLIGHT_PIN, LCD_BRIGHTNESS);
+  
   
   // Initialize stock data
   for (int i = 0; i < NUM_STOCKS; i++) {
@@ -57,30 +65,104 @@ void setup() {
     stocks[i].changed = false;
   }
   
-  // Connect to WiFi
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  // Setup WiFiManager
+  WiFiManager wm;
+  
+  Serial.println("=== WIFI MANAGER DEBUG ===");
+  Serial.println("Initializing WiFiManager...");
+  
+  // Check if we have saved WiFi credentials
+  wifi_config_t conf;
+  esp_wifi_get_config(WIFI_IF_STA, &conf);
+  Serial.printf("Saved SSID: '%s'\n", conf.sta.ssid);
+  Serial.printf("Saved SSID length: %d\n", strlen((char*)conf.sta.ssid));
+  
+  if (strlen((char*)conf.sta.ssid) > 0) {
+    Serial.println("Found saved WiFi credentials!");
+  } else {
+    Serial.println("No saved WiFi credentials found");
+  }
+  
+  // Configure WiFiManager to preserve settings
+  wm.setDebugOutput(true);
+  wm.setConfigPortalTimeout(120); // 2 minute timeout for config portal
+  wm.setConnectTimeout(30); // 30 second timeout for connection attempts
+  wm.setSaveParamsCallback([](){
+    Serial.println("=== WIFI PARAMS SAVED CALLBACK ===");
+  });
+  wm.setSaveConfigCallback([](){
+    Serial.println("=== WIFI CONFIG SAVED CALLBACK ===");
+  });
+  
+  // Try to connect to saved WiFi first
+  Serial.println("Attempting WiFi connection with autoConnect...");
+  
   tft.setCursor(10, 10);
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(2);
-  tft.print("Connecting...");
+  tft.print("WiFi Setup...");
   
-  int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-    delay(1000);
-    Serial.print(".");
-    attempts++;
+  // Show setup message on display
+  tft.setCursor(10, 40);
+  tft.setTextSize(1);
+  tft.print("1. Connect to WiFi:");
+  tft.setCursor(10, 55);
+  tft.print("   Stock_Tracker_Setup");
+  tft.setCursor(10, 75);
+  tft.print("2. Enter WiFi credentials");
+  tft.setCursor(10, 90);
+  tft.print("3. Wait for connection...");
+  
+  // Try autoConnect first - only show portal if no saved WiFi
+  Serial.println("Attempting WiFi connection...");
+  
+  bool wifi_result = wm.autoConnect("Stock_Tracker_Setup");
+  
+  if (!wifi_result) {
+    Serial.println("=== WIFI CONNECTION FAILED ===");
+    Serial.println("Failed to connect and hit timeout");
+    tft.fillScreen(TFT_RED);
+    tft.setCursor(10, 10);
+    tft.setTextColor(TFT_WHITE);
+    tft.print("WiFi Setup Failed");
+    tft.setCursor(10, 30);
+    tft.print("Restarting...");
+    delay(3000);
+    ESP.restart();
   }
   
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println();
-    Serial.print("Connected! IP: ");
-    Serial.println(WiFi.localIP());
-    tft.fillScreen(TFT_BLACK);
-    
-    // Configure time
-    configTime(TIMEZONE_OFFSET * 3600, 0, "pool.ntp.org", "time.nist.gov");
-    Serial.printf("Time configured for timezone offset: %d hours\n", TIMEZONE_OFFSET);
-  }
+  // Connected! Check credentials again
+  Serial.println("=== WIFI CONNECTION SUCCESS ===");
+  Serial.println("WiFi Connected!");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+  Serial.print("RSSI: ");
+  Serial.println(WiFi.RSSI());
+  
+  // Check if credentials are now saved
+  wifi_config_t conf_after;
+  esp_wifi_get_config(WIFI_IF_STA, &conf_after);
+  Serial.printf("After connection - Saved SSID: '%s'\n", conf_after.sta.ssid);
+  Serial.printf("After connection - Saved SSID length: %d\n", strlen((char*)conf_after.sta.ssid));
+  
+  // Stop WiFiManager AP mode (turn off hotspot)
+  Serial.println("Stopping WiFiManager portal and AP...");
+  wm.stopWebPortal();
+  WiFi.softAPdisconnect(true);
+  Serial.println("AP disconnected");
+  
+  tft.fillScreen(TFT_BLACK);
+  tft.setCursor(10, 10);
+  tft.setTextColor(TFT_GREEN);
+  tft.setTextSize(2);
+  tft.print("WiFi Connected!");
+  delay(2000);
+  
+  // Configure time  
+  configTime(TIMEZONE_OFFSET * 3600, 0, "pool.ntp.org", "time.nist.gov");
+  Serial.printf("Time configured (UTC%d)\n", TIMEZONE_OFFSET);
   
   // Ready to start
   
@@ -112,6 +194,7 @@ void create_ui() {
   tft.setTextSize(2);
   tft.print("STOCK TRACKER");
   
+  
   // Draw table header
   tft.drawLine(10, 30, 230, 30, TFT_BLUE);
   tft.setCursor(10, 35);
@@ -128,8 +211,20 @@ void create_ui() {
 void fetch_stock_data() {
   Serial.println("=== Starting stock data fetch ===");
   
+  // Debug WiFi status
+  Serial.printf("WiFi status: %d (WL_CONNECTED=%d)\n", WiFi.status(), WL_CONNECTED);
+  Serial.printf("Current SSID: %s\n", WiFi.SSID().c_str());
+  Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
+  Serial.printf("RSSI: %d\n", WiFi.RSSI());
+  
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("ERROR: WiFi not connected!");
+    
+    // Check saved credentials
+    wifi_config_t conf_check;
+    esp_wifi_get_config(WIFI_IF_STA, &conf_check);
+    Serial.printf("Saved credentials check - SSID: '%s'\n", conf_check.sta.ssid);
+    
     return;
   }
   Serial.println("WiFi is connected");
@@ -302,27 +397,30 @@ void update_display() {
   // Clear the status area to remove any old text
   tft.fillRect(10, 240, 220, 80, TFT_BLACK);
   
-  // Status - Show last updated time
+  // Status - Show connection status only
   tft.setCursor(10, 280);
   tft.setTextColor(TFT_CYAN);
   tft.setTextSize(1);
   if (valid_count == 0) {
     tft.print("Connecting...");
   } else {
-    struct tm timeinfo;
-    if (last_update_time > 0 && localtime_r(&last_update_time, &timeinfo)) {
-      // Convert to 12-hour format
-      int hour12 = timeinfo.tm_hour;
-      if (hour12 == 0) hour12 = 12;
-      else if (hour12 > 12) hour12 -= 12;
-      const char* ampm = (timeinfo.tm_hour >= 12) ? "PM" : "AM";
-      
-      tft.printf("Last updated: %d:%02d %s", 
-                 hour12, timeinfo.tm_min, ampm);
-    } else {
-      tft.printf("Updated (%d stocks)", valid_count);
-    }
+    tft.printf("Live (%d stocks)", valid_count);
   }
+  
+  // Commented out last updated time display
+  /*
+  struct tm timeinfo;
+  if (last_update_time > 0 && localtime_r(&last_update_time, &timeinfo)) {
+    // Convert to 12-hour format
+    int hour12 = timeinfo.tm_hour;
+    if (hour12 == 0) hour12 = 12;
+    else if (hour12 > 12) hour12 -= 12;
+    const char* ampm = (timeinfo.tm_hour >= 12) ? "PM" : "AM";
+    
+    tft.printf("Last updated: %d:%02d %s", 
+               hour12, timeinfo.tm_min, ampm);
+  }
+  */
   
   Serial.println("=== Display update complete ===");
 }
@@ -373,19 +471,7 @@ void update_single_stock(int stock_index) {
   if (valid_count == 0) {
     tft.print("Connecting...");
   } else {
-    struct tm timeinfo;
-    if (last_update_time > 0 && localtime_r(&last_update_time, &timeinfo)) {
-      // Convert to 12-hour format
-      int hour12 = timeinfo.tm_hour;
-      if (hour12 == 0) hour12 = 12;
-      else if (hour12 > 12) hour12 -= 12;
-      const char* ampm = (timeinfo.tm_hour >= 12) ? "PM" : "AM";
-      
-      tft.printf("Last updated: %d:%02d %s", 
-                 hour12, timeinfo.tm_min, ampm);
-    } else {
-      tft.printf("Updated (%d stocks)", valid_count);
-    }
+    tft.printf("Live (%d stocks)", valid_count);
   }
   
   Serial.printf("=== Single stock update complete for %s ===\n", STOCK_SYMBOLS[stock_index]);
@@ -423,3 +509,4 @@ void show_initial_structure() {
   
   Serial.println("=== Initial structure complete ===");
 }
+

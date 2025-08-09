@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  stock-tracker-webflasher:
+    build: .
+    ports:
+      - "8003:8003"
+    container_name: stock-tracker-webflasher
+    restart: unless-stopped

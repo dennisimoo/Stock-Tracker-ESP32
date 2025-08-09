@@ -1,0 +1,28 @@
+{
+  "name": "Stock Tracker ESP32 - 2.8 inch Display",
+  "version": "1.0.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        {
+          "path": "stock_tracker.ino.bootloader.bin",
+          "offset": 4096
+        },
+        {
+          "path": "stock_tracker.ino.partitions.bin",
+          "offset": 32768
+        },
+        {
+          "path": "boot_app0.bin", 
+          "offset": 57344
+        },
+        {
+          "path": "stock_tracker.ino.bin",
+          "offset": 65536
+        }
+      ]
+    }
+  ]
+}

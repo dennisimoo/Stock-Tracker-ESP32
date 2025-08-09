@@ -1,98 +1,91 @@
 # ESP32 Stock Tracker
 
-A real-time stock price tracker for ESP32 displays showing live stock data from Yahoo Finance. Perfect for monitoring your favorite tech stocks with a clean, easy-to-read interface.
+A real-time stock price tracker for ESP32 with 2.8" TFT displays. Shows live stock data from Yahoo Finance with automatic WiFi setup and clean interface.
 
 ## 🚀 Features
 
-- **Live Stock Prices** - Real-time data from Yahoo Finance (no API key needed!)
+- **Live Stock Prices** - Real-time data from Yahoo Finance (no API key needed)
 - **Clean Display** - Organized table format (Symbol | Price | Change)
 - **Smart Updates** - Only refreshes when prices actually change
 - **Color Coding** - Green for gains, red for losses
-- **12-Hour Time** - Shows last update time in PST with AM/PM
-- **WiFi Auto-Connect** - Automatically connects to your network
-- **Power Efficient** - Minimal screen updates to save battery
+- **WiFi Manager** - Automatic captive portal setup for WiFi credentials
+- **Browser Installation** - Flash firmware directly from your browser
+- **Pre-configured** - Ready to use with popular tech stocks
 
 ## 📋 Hardware Requirements
 
-- **ESP32-2432S028R** (Cheap Yellow Display) with 2.8" TFT touchscreen
+- **ESP32** with **2.8" TFT display** (like ESP32-2432S028R)
 - **USB Cable** for programming and power
 - **WiFi Network** for internet connectivity
 
-## ⚙️ Setup Instructions
+## ⚙️ Installation Options
 
-### 1. Install PlatformIO
+### Option 1: Browser Installation (Recommended)
 
-**Option A: VS Code Extension (Recommended)**
-1. Install [Visual Studio Code](https://code.visualstudio.com/)
-2. Open VS Code and install the "PlatformIO IDE" extension
-3. Restart VS Code
+1. **Open the webflasher** in Chrome or Edge browser:
+   ```bash
+   # Run the webflasher locally
+   cd Stock_Tracker_webflasher
+   python3 -m http.server 8003
+   ```
+   Then go to `http://localhost:8003`
 
-**Option B: Command Line**
-```bash
-pip install platformio
-```
+2. **Or deploy with Docker:**
+   ```bash
+   docker-compose up -d
+   ```
+   Then go to `http://localhost:8003`
 
-### 2. Configure WiFi Settings
+3. **Connect and flash:**
+   - Connect ESP32 to USB
+   - Click "Connect & Install Stock Tracker"
+   - Select USB Serial port
+   - Wait for installation to complete
 
-**IMPORTANT:** Before uploading, you must configure your WiFi credentials!
+4. **WiFi Setup (automatic):**
+   - ESP32 creates hotspot "Stock_Tracker_Setup"
+   - Connect with your phone
+   - Enter your WiFi credentials
+   - ESP32 automatically connects and starts tracking stocks
 
-1. Open `config.h` in the root directory
-2. Edit these lines with your WiFi information:
-```cpp
-#define WIFI_SSID "YOUR_WIFI_NAME"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-```
+### Option 2: Manual Development Setup
 
-### 3. Customize Settings (Optional)
+1. **Install PlatformIO:**
+   ```bash
+   pip install platformio
+   ```
 
-In `config.h`, you can also modify:
-- **Timezone**: Change `TIMEZONE_OFFSET` for your location
-  - PST: -8, PDT: -7
-  - MST: -7, MDT: -6  
-  - CST: -6, CDT: -5
-  - EST: -5, EDT: -4
-- **Stocks**: Modify `STOCK_SYMBOLS` array to track different stocks
-- **Update Rate**: Change `UPDATE_INTERVAL_SECONDS` (default: 30 seconds)
-- **Brightness**: Adjust `LCD_BRIGHTNESS` (0-255, default: 255)
+2. **Clone and build:**
+   ```bash
+   git clone <repository-url>
+   cd Stock_Tracker
+   platformio run
+   ```
 
-### 4. Connect Hardware
+3. **Upload firmware:**
+   ```bash
+   platformio run --target upload
+   ```
 
-1. Connect your ESP32 to your computer via USB
-2. Note the serial port (you'll need this for uploading)
+4. **Monitor output:**
+   ```bash
+   platformio device monitor --port /dev/cu.usbserial-110
+   ```
 
-### 5. Upload Code
+## 📊 Pre-configured Stocks
 
-**Option A: VS Code PlatformIO**
-1. Open this project folder in VS Code
-2. Click the PlatformIO icon in the sidebar
-3. Click "Upload" button
-
-**Option B: Command Line**
-```bash
-# Find your serial port first
-ls /dev/cu.*  # macOS/Linux
-# or
-mode  # Windows
-
-# Upload (replace with your actual port)
-pio run --target upload --upload-port /dev/cu.usbserial-210
-```
-
-**Common Serial Ports:**
-- macOS: `/dev/cu.usbserial-210` or `/dev/cu.SLAB_USBtoUART`
-- Linux: `/dev/ttyUSB0` or `/dev/ttyACM0`
-- Windows: `COM3`, `COM4`, etc.
-
-### 6. Monitor Output (Optional)
-
-To see debug information:
-```bash
-pio device monitor --port /dev/cu.usbserial-210
-```
+The tracker comes pre-loaded with these popular tech stocks:
+- **AAPL** - Apple Inc.
+- **GOOGL** - Alphabet Inc.
+- **NVDA** - NVIDIA Corporation
+- **TSLA** - Tesla Inc.
+- **META** - Meta Platforms Inc.
+- **AMZN** - Amazon.com Inc.
+- **MSFT** - Microsoft Corporation
+- **AMD** - Advanced Micro Devices Inc.
 
 ## 📊 Display Format
 
-The screen shows:
 ```
 STOCK TRACKER
 Symbol    Price     Change
@@ -105,43 +98,85 @@ AMZN      $213.75   +0.99%
 MSFT      $527.75   -1.47%
 AMD       $174.31   -1.40%
 
-Last updated: 7:48:54 PM PST
+Live (8 stocks)
+```
+
+## ⚙️ Configuration
+
+### Changing Stocks
+Edit `config.h` to modify the stock list:
+```cpp
+static const char* STOCK_SYMBOLS[] = {"AAPL", "GOOGL", "NVDA", "TSLA", "META", "AMZN", "MSFT", "AMD"};
+static const char* STOCK_NAMES[] = {"Apple", "Alphabet", "NVIDIA", "Tesla", "Meta", "Amazon", "Microsoft", "AMD"};
+```
+
+### Timezone
+Currently hardcoded to Pacific Time (PST). Change in `config.h`:
+```cpp
+#define TIMEZONE_OFFSET -8  // PST (Pacific Standard Time)
+```
+
+### Update Frequency
+Default is 60 seconds. Change in `config.h`:
+```cpp
+#define UPDATE_INTERVAL_SECONDS 60
 ```
 
 ## 🔧 Troubleshooting
 
-### WiFi Connection Issues
-- Double-check SSID and password in `config.h`
-- Ensure your WiFi network is 2.4GHz (ESP32 doesn't support 5GHz)
-- Check that your network allows new devices
+### WiFi Issues
+- WiFi credentials are saved automatically after first setup
+- If WiFi setup runs every boot, check that `autoConnect()` is used in code
+- ESP32 only supports 2.4GHz networks
 
-### Upload Issues
-- Make sure you have the correct serial port
-- Try pressing the BOOT button on ESP32 during upload
-- Check USB cable connection
+### Browser Installation Issues
+- Only works in Chrome, Edge, or Opera browsers
+- Requires HTTPS or localhost
+- Make sure ESP32 is connected via USB before clicking Connect
 
 ### Display Issues
-- Verify TFT_eSPI library is properly configured
-- Check `TFT_eSPI/User_Setup.h` for correct pin definitions
-- Adjust brightness in `config.h` if display is too dim/bright
+- Verify 2.8" TFT display is properly connected
+- Check TFT_eSPI configuration in `platformio.ini`
 
 ### Stock Data Issues
-- Check internet connection
+- Requires internet connection
 - Yahoo Finance API is free but may have rate limits
-- Increase `UPDATE_INTERVAL_SECONDS` if getting errors
+- Increase update interval if getting errors
 
 ## 📁 Project Structure
 
 ```
-StockTracker/
-├── config.h              # Configuration settings (WiFi, stocks, etc.)
+Stock_Tracker/
 ├── src/
-│   └── main.cpp          # Main application code
-│   └── display.jpg       # Image
-├── platformio.ini        # PlatformIO build configuration
-├── .gitignore           # Git ignore rules
-└── README.md            # This file
+│   └── main.cpp                    # ESP32 firmware
+├── Stock_Tracker_webflasher/       # Browser-based installer
+│   ├── index.html                 # Webflasher interface
+│   ├── manifest-2.8inch.json      # ESP Web Tools manifest
+│   ├── stock_tracker.png          # Logo image
+│   └── *.bin                      # Firmware binaries
+├── config.h                       # Configuration settings
+├── platformio.ini                 # PlatformIO build config
+├── Dockerfile                     # Docker deployment
+├── docker-compose.yml             # Docker Compose config
+├── .gitignore                     # Git ignore rules
+├── context.txt                    # Development documentation
+└── README.md                      # This file
 ```
+
+## 🐳 Docker Deployment
+
+Deploy the webflasher using Docker:
+
+```bash
+# Build and run
+docker-compose up -d
+
+# Or manually
+docker build -t stock-tracker-webflasher .
+docker run -d -p 8003:8003 stock-tracker-webflasher
+```
+
+Access at `http://localhost:8003`
 
 ## 🤝 Contributing
 
@@ -153,4 +188,4 @@ This project is open source and available under the MIT License.
 
 ---
 
-**Happy Stock Tracking! 📈**
+**Happy Stock Tracking!**

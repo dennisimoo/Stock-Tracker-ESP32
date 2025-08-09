@@ -1,0 +1,13 @@
+# Exclude files not needed in the Docker image
+.git/
+.gitignore
+.pio/
+src/
+config.h
+platformio.ini
+TFT_eSPI/
+lvgl/
+images/
+context.txt
+README.md
+LICENSE

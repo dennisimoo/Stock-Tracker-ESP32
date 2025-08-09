@@ -1,0 +1,103 @@
+# Stock Tracker Project Context
+
+## Project Overview
+This project was transformed from a "Bongo Cat webflasher" into a "Stock Tracker ESP32 installer". The webflasher allows users to flash ESP32 firmware directly from their browser using ESP Web Tools.
+
+## What We Did
+
+### 1. Project Transformation
+- **Source**: Original Bongo Cat webflasher project
+- **Target**: Stock Tracker ESP32 installer for 2.8" TFT displays
+- **Renamed**: Folder from "Bongo_cat_webflasher-master" to "Stock_Tracker_webflasher"
+- **Updated**: All branding, text, and references from Bongo Cat to Stock Tracker throughout all files
+
+### 2. Core Components
+
+#### A. ESP32 Firmware (`src/main.cpp`)
+- **Purpose**: Real-time stock price tracker using Yahoo Finance API
+- **Display**: Shows 8 stock symbols (AAPL, GOOGL, NVDA, TSLA, META, AMZN, MSFT, AMD)
+- **WiFi**: Uses WiFiManager library for captive portal setup
+- **Updates**: Fetches data every 60 seconds, only updates display when prices change
+- **Timezone**: Hardcoded to PST (UTC-8)
+- **Status Display**: Shows "Live (X stocks)" instead of "Last updated" time (commented out)
+
+#### B. Configuration (`config.h`)
+- **Stocks**: Pre-configured with 8 major tech stocks
+- **Timezone**: Set to PST (UTC-8)  
+- **Update Interval**: 60 seconds
+- **Display**: 2.8" TFT display settings
+
+#### C. Web Installer (`Stock_Tracker_webflasher/index.html`)
+- **Browser-based**: Uses ESP Web Tools for direct firmware flashing
+- **Target**: Chrome/Edge browsers with Web Serial API support
+- **Minimalist**: Removed pre-configured settings display, removed after installation steps
+- **WiFi**: Simple note that WiFi will be configured after setup
+- **UI Design**: Clean 8th grade language, no emojis, uses stock_tracker.png image
+
+### 3. WiFiManager Implementation
+- **First Boot**: Creates "Stock_Tracker_Setup" hotspot for WiFi credentials
+- **Subsequent Boots**: Automatically connects using saved credentials
+- **Smart Behavior**: Only shows setup portal if no saved WiFi exists
+- **Hotspot Management**: Turns off AP mode after successful connection
+
+### 4. Key Technical Decisions
+
+#### Why WiFiManager?
+- **User-Friendly**: No need to hardcode WiFi credentials in firmware
+- **Flexible**: Works with any WiFi network
+- **Persistent**: Saves credentials to ESP32's NVS (non-volatile storage)
+
+#### Why Hardcoded PST Timezone?
+- **Simplicity**: Removed complex timezone configuration from web interface
+- **Target Audience**: Designed for PST users (can be changed in config.h if needed)
+- **Reliability**: Eliminates web form complications
+
+#### Why Yahoo Finance API?
+- **Free**: No API key required
+- **Reliable**: Large-scale service with good uptime
+- **Real-time**: Provides current market prices and percentage changes
+
+### 5. File Structure
+```
+Stock_Tracker/
+├── src/
+│   └── main.cpp              # ESP32 firmware
+├── config.h                  # Configuration settings
+├── Stock_Tracker_webflasher/ # Web installer
+│   ├── index.html           # Main installer page
+│   ├── manifest-2.8inch.json # ESP Web Tools manifest
+│   └── [firmware files]     # Built firmware binaries
+├── .gitignore               # Git ignore file
+└── context.txt              # This documentation
+```
+
+### 6. Build Process
+- **Platform**: PlatformIO
+- **Target**: ESP32 with 2.8" TFT display
+- **Output**: Firmware binaries placed in webflasher folder
+- **Command**: `pio run` to build firmware
+
+### 7. User Experience
+1. **Open Installer**: User opens index.html in Chrome/Edge
+2. **Connect ESP32**: Click "Connect & Install Stock Tracker" 
+3. **Flash Firmware**: ESP Web Tools handles the flashing process
+4. **WiFi Setup**: ESP32 creates hotspot, user enters WiFi credentials
+5. **Auto Operation**: Device connects to WiFi and starts fetching stock data
+6. **Display**: Shows real-time stock prices with color-coded changes
+
+### 8. Troubleshooting Notes
+- **WiFi Issues**: If WiFi setup runs every boot, check that autoConnect() is used instead of startConfigPortal()
+- **Display Issues**: Ensure 2.8" TFT display is properly connected
+- **Build Issues**: Check that .pio/ folder is properly excluded in .gitignore
+- **Browser Issues**: Only works in Chrome/Edge with Web Serial API
+- **PST Button Issue**: Resolved by removing unused XPT2046_Touchscreen library from platformio.ini
+- **Time Display Issue**: Time display is commented out, shows "Live (X stocks)" instead
+
+### 9. Future AI Context
+- **WiFiManager**: Uses autoConnect() to preserve saved WiFi credentials
+- **Timezone**: Hardcoded to PST in config.h (TIMEZONE_OFFSET -8)
+- **Stocks**: Pre-configured list of 8 tech stocks in config.h
+- **Updates**: Only updates display when actual price changes occur
+- **Hotspot**: Automatically turns off AP mode after WiFi connection
+
+This project successfully transforms a novelty cat animation webflasher into a practical financial tool for monitoring stock prices on ESP32 hardware.
