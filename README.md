@@ -2,6 +2,13 @@
 
 A real-time stock price tracker for ESP32 with 2.8" TFT displays. Shows live stock data from Yahoo Finance with automatic WiFi setup and clean interface.
 
+## 🖨️ 3D Printable Case
+
+**Download the 3D printable case from MakerWorld:**
+[Stock Tracker ESP32 Display - MakerWorld](https://makerworld.com/en/models/1683317-stock-tracker-esp32-display#profileId-1783519)
+
+The case protects your ESP32 display and gives it a clean, professional desk appearance.
+
 ## 🚀 Features
 
 - **Live Stock Prices** - Real-time data from Yahoo Finance (no API key needed)
@@ -14,15 +21,21 @@ A real-time stock price tracker for ESP32 with 2.8" TFT displays. Shows live sto
 
 ## 📋 Hardware Requirements
 
-- **ESP32** with **2.8" TFT display** (like ESP32-2432S028R)
+- **ESP32 with 2.8" TFT display** (ESP32-2432S028R, also called "Cheap Yellow Display")
+  - [Amazon Link](https://www.amazon.com/s?k=ESP32-2432S028R)
+  - [AliExpress Link](https://www.aliexpress.com/w/wholesale-ESP32-2432S028R.html)
 - **USB Cable** for programming and power
 - **WiFi Network** for internet connectivity
+- **3D Printed Case** - [Download from MakerWorld](https://makerworld.com/en/models/1683317-stock-tracker-esp32-display#profileId-1783519)
 
 ## ⚙️ Installation Options
 
 ### Option 1: Browser Installation (Recommended)
 
-1. **Open the webflasher** in Chrome or Edge browser:
+1. **Use the live webflasher** (easiest option):
+   **Go to: [https://stocktracker.apps.dj/](https://stocktracker.apps.dj/)**
+
+2. **Or run the webflasher locally** in Chrome or Edge browser:
    ```bash
    # Run the webflasher locally
    cd Stock_Tracker_webflasher
@@ -30,19 +43,19 @@ A real-time stock price tracker for ESP32 with 2.8" TFT displays. Shows live sto
    ```
    Then go to `http://localhost:8003`
 
-2. **Or deploy with Docker:**
+3. **Or deploy with Docker:**
    ```bash
    docker-compose up -d
    ```
    Then go to `http://localhost:8003`
 
-3. **Connect and flash:**
+4. **Connect and flash:**
    - Connect ESP32 to USB
    - Click "Connect & Install Stock Tracker"
    - Select USB Serial port
    - Wait for installation to complete
 
-4. **WiFi Setup (automatic):**
+5. **WiFi Setup (automatic):**
    - ESP32 creates hotspot "Stock_Tracker_Setup"
    - Connect with your phone
    - Enter your WiFi credentials
